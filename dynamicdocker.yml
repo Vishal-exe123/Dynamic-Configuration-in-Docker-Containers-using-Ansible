@@ -1,0 +1,48 @@
+- hosts:  localhost
+  vars_files:
+  - vars.yml
+
+  tasks:
+  - name:  Starting docker daemon/service
+    service:
+            name:  "docker"
+            state:  started
+
+  - name: Launching docker container
+    docker_container:
+            name:  "{{ container_name }}"
+            image:  "vish1234/imagetask14.2:v2"
+            state: started
+            interactive: yes
+            tty: yes
+            ports:
+            - "{{ web_port_no }}:80"
+            - "{{ ssh_port_no }}:22"
+    register: docker_info
+
+  - name: retrieving docker IP Address 
+    debug: 
+      var: docker_info.container.NetworkSettings.IPAddress
+
+  - name: Updating Inventory file
+    blockinfile:
+      path: ip.txt
+      block: |
+             [docker]
+             {{ docker_info['container']['NetworkSettings']['IPAddress'] }} ansible_ssh_user=root ansible_ssh_pass=vishdocker  ansible_connection=ssh
+
+- hosts:  docker
+  tasks:
+  - name: Installing the Webserver
+    package:
+      name: httpd
+      state: present
+  - name: Configuring the WebPages
+    copy:
+      content: "HELLOO..!!!! MY DYNAMIC DOCKER CONTAINER LAUNCHED"
+      dest: /var/www/html/index.html
+  - name: Starting the Service
+    command: "/usr/sbin/httpd"
+
+
+
