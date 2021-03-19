@@ -1,0 +1,3 @@
+container_name:  "c1"
+ssh_port_no:  21
+web_port_no:  8181
